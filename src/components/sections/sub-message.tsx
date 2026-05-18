@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from "react"
 import SplitText from "@/components/ui/SplitText"
 
 const LINES = [
-  "For sharper trading",
-  "For deeper markets",
-  "For clearer infrastructure",
+  "Trade together",
+  "Trade smarter",
+  "Trade simpler",
 ]
 
 export function SubMessage() {
@@ -28,28 +28,23 @@ export function SubMessage() {
   }, [])
 
   return (
-    <section
-      ref={sectionRef}
-      style={{ height: "180vh" }}
-      className="relative bg-[#0A0A0A]"
-    >
-      <div className="sticky top-0 flex items-center h-screen">
-        <div className="mx-auto w-full max-w-[1200px] px-6 md:px-8">
+    <section ref={sectionRef} className="sub-section">
+      <div className="sub-sticky">
+        <div className="sub-inner">
           <div className="relative">
             {LINES.map((line, i) => (
               <div
                 key={i}
+                className={`sub-line${i > 0 ? " sub-line-stacked" : ""}`}
                 style={{
                   opacity: i === currentIndex ? 1 : 0,
                   pointerEvents: i === currentIndex ? "auto" : "none",
-                  transition: "opacity 0.35s ease",
-                  ...(i > 0 && { position: "absolute", top: 0, left: 0, width: "100%" }),
                 }}
               >
                 <SplitText
                   text={line}
                   animate={i === currentIndex}
-                  className="text-[36px] md:text-[40px] font-medium leading-[1.2] tracking-[-0.02em] text-white"
+                  className="sub-text"
                   delay={40}
                   duration={1.25}
                   ease="power3.out"

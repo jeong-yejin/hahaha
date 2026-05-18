@@ -20,7 +20,7 @@ export default function App() {
       />
       <CursorGlow />
       <Navbar />
-      <main className="font-outfit bg-[#0A0A0A]">
+      <main className="bg-[#0A0A0A]">
         <Hero />
         <SubMessage />
         <Features />

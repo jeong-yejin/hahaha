@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react"
 import { ArrowUpRight } from "lucide-react"
+import { HoverButton } from "@/components/ui/hover-button"
 
-const NAV_ITEMS = ["Terminal", "Rebate", "Labs"]
+const NAV_ITEMS = [
+  { label: "Terminal", href: "#feature-terminal" },
+  { label: "Rebate", href: "#feature-rebate" },
+  { label: "Labs", href: "#feature-labs" },
+]
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -24,10 +29,10 @@ export function Navbar() {
       >
         {/* Logo */}
         <a
-          href="#"
-          className="px-4 py-1.5 text-[14px] font-semibold tracking-[-0.02em] text-white hover:opacity-70 transition-opacity duration-300"
+          href="#hero"
+          className="px-4 py-1.5 hover:opacity-70 transition-opacity duration-300"
         >
-          ReboundX
+          <img src="/wordmark.svg" alt="ReboundX" className="h-5 w-auto" />
         </a>
 
         {/* Divider */}
@@ -37,11 +42,11 @@ export function Navbar() {
         <nav className="hidden items-center gap-1 md:flex">
           {NAV_ITEMS.map((item) => (
             <a
-              key={item}
-              href="#"
+              key={item.label}
+              href={item.href}
               className="rounded-full px-4 py-1.5 text-[13px] font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all duration-300"
             >
-              {item}
+              {item.label}
             </a>
           ))}
         </nav>
@@ -50,15 +55,15 @@ export function Navbar() {
         <div className="hidden md:block h-4 w-px bg-white/10" />
 
         {/* CTA — button-in-button pill */}
-        <a
-          href="#"
-          className="group inline-flex items-center gap-2 rounded-full bg-[#CAFF5D] pl-5 pr-1.5 py-1.5 text-[13px] font-semibold text-[#0A0A0A] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:brightness-110 active:scale-[0.97]"
+        <HoverButton
+          href="#feature-terminal"
+          className="group inline-flex items-center gap-2 rounded-full bg-[linear-gradient(160deg,#0d0d0d_0%,#111a05_100%)] pl-5 pr-1.5 py-1.5 text-[13px] font-semibold text-white"
         >
-          Launch app
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0A0A0A]/10 transition-all duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:scale-110">
+          Open Terminal
+          <span className="flex h-7 w-7 items-center justify-center transition-all duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:scale-110">
             <ArrowUpRight className="h-3.5 w-3.5" />
           </span>
-        </a>
+        </HoverButton>
       </div>
     </header>
   )

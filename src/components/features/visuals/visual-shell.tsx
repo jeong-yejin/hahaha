@@ -27,7 +27,7 @@ function StarCanvas() {
     const ctx = canvas.getContext("2d")
     if (!ctx) return
 
-    let raf = 0
+    let raf: number | null = null
     type Star = { x: number; y: number; o: number; speed: number; r: number }
     let stars: Star[] = []
 
@@ -67,10 +67,40 @@ function StarCanvas() {
       raf = requestAnimationFrame(draw)
     }
 
-    resize()
-    draw()
+    const start = () => {
+      if (raf !== null) return
+      raf = requestAnimationFrame(draw)
+    }
 
-    return () => cancelAnimationFrame(raf)
+    const stop = () => {
+      if (raf !== null) {
+        cancelAnimationFrame(raf)
+        raf = null
+      }
+    }
+
+    resize()
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) start()
+        else stop()
+      },
+      { rootMargin: "200px 0px" },
+    )
+    io.observe(canvas)
+
+    const onVisibility = () => {
+      if (document.hidden) stop()
+      else start()
+    }
+    document.addEventListener("visibilitychange", onVisibility)
+
+    return () => {
+      io.disconnect()
+      document.removeEventListener("visibilitychange", onVisibility)
+      stop()
+    }
   }, [])
 
   return <canvas ref={ref} aria-hidden className="pointer-events-none absolute inset-0 h-full w-full" />

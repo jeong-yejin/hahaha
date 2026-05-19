@@ -27,7 +27,7 @@ function MapCanvas() {
     // cities (Seoul, Tokyo, London, NY, Jakarta…) align with the rendered map.
     const projection = geoEquirectangular()
       .scale(121.7)
-      .translate([201, 340])
+      .translate([201, 210])
 
     const off = document.createElement("canvas")
     off.width = w
@@ -63,38 +63,39 @@ function MapCanvas() {
     <canvas
       ref={ref}
       width={555}
-      height={483}
+      height={353}
       aria-hidden
       style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
     />
   )
 }
 
-// Coordinates from Figma (relative to 555×483 inner card)
+// Coordinates from Figma (relative to 555×353 inner card; shifted up 130px from
+// the original 555×483 layout to remove empty space above the map).
 const LIME = "#CAFF5D"
 const LIGHT_LIME = "#E6FFB3"
 
 const SMALL_DOTS = [
-  { x: 471, y: 263, color: LIME },
-  { x: 470, y: 256, color: LIME },
-  { x: 494, y: 257, color: LIGHT_LIME },
-  { x: 295, y: 321, color: LIGHT_LIME },
-  { x: 42,  y: 257, color: LIGHT_LIME },
-  { x: 201, y: 228, color: LIGHT_LIME },
-  { x: 429, y: 357, color: LIGHT_LIME },
+  { x: 471, y: 133, color: LIME },
+  { x: 470, y: 126, color: LIME },
+  { x: 494, y: 127, color: LIGHT_LIME },
+  { x: 295, y: 191, color: LIGHT_LIME },
+  { x: 42,  y: 127, color: LIGHT_LIME },
+  { x: 201, y: 98,  color: LIGHT_LIME },
+  { x: 429, y: 227, color: LIGHT_LIME },
 ]
 
 const GLOWS = [
-  { x: 461, y: 252, size: 20, color: LIME,       blur: 22 },
-  { x: 494, y: 254, size: 10, color: LIGHT_LIME, blur: 21 },
-  { x: 429, y: 357, size: 10, color: LIGHT_LIME, blur: 21 },
-  { x: 294, y: 318, size: 10, color: LIGHT_LIME, blur: 21 },
-  { x: 41,  y: 254, size: 10, color: LIGHT_LIME, blur: 21 },
-  { x: 198, y: 225, size: 10, color: LIGHT_LIME, blur: 21 },
+  { x: 461, y: 122, size: 20, color: LIME,       blur: 22 },
+  { x: 494, y: 124, size: 10, color: LIGHT_LIME, blur: 21 },
+  { x: 429, y: 227, size: 10, color: LIGHT_LIME, blur: 21 },
+  { x: 294, y: 188, size: 10, color: LIGHT_LIME, blur: 21 },
+  { x: 41,  y: 124, size: 10, color: LIGHT_LIME, blur: 21 },
+  { x: 198, y: 95,  size: 10, color: LIGHT_LIME, blur: 21 },
 ]
 
 const W = 555
-const H = 483
+const H = 353
 const pct = (v: number, total: number) => `${(v / total) * 100}%`
 
 function KoreanFlag({ size = 12 }: { size?: number }) {
@@ -148,8 +149,8 @@ export function LabsVisual() {
         {/* Ambient lime gradient blur */}
         <div aria-hidden style={{
           position: "absolute",
-          left: "-45%", top: "61%",
-          width: "115%", height: "110%",
+          left: "-45%", top: "47%",
+          width: "115%", height: "150%",
           background: "linear-gradient(180deg, #BAFF38 0%, #FFFF38 100%)",
           opacity: 0.15,
           filter: "blur(240px)",
@@ -203,7 +204,7 @@ export function LabsVisual() {
           style={{
             position: "absolute",
             left: pct(439, W),
-            top: pct(238, H),
+            top: pct(108, H),
             display: "flex",
             alignItems: "center",
             gap: 2,

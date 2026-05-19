@@ -1,6 +1,3 @@
-import { LabsVisual } from "./labs-visual"
-import { RebateVisual } from "./rebate-visual"
-import { TerminalVisual } from "./terminal-visual"
-
-export const FEATURE_VISUALS = [TerminalVisual, RebateVisual, LabsVisual]
-
+export { LabsVisual } from "./labs-visual"
+export { RebateVisual } from "./rebate-visual"
+export { TerminalFeedPanel, TerminalMainPanel } from "./terminal-visual"

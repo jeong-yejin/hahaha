@@ -112,6 +112,7 @@
     @apply py-24 md:py-32;
     border-top-left-radius: 48px;
     border-top-right-radius: 48px;
+    contain: layout;
   }
 
   .features-band-inner {
@@ -155,6 +156,33 @@
 
   .features-row {
     @apply grid grid-cols-1 items-center gap-12 md:grid-cols-2 md:gap-16;
+  }
+
+  .features-terminal-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  @media (min-width: 768px) {
+    .features-terminal-grid {
+      grid-template-columns: 1fr 1fr;
+      column-gap: 4rem;
+    }
+  }
+
+  .features-terminal-left,
+  .features-terminal-right {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .features-terminal-right {
+      justify-content: flex-end;
+      gap: 1.25rem;
+    }
   }
 
 

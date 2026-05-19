@@ -1,53 +1,124 @@
 import { useEffect, useRef, type CSSProperties } from "react"
-import { gsap } from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
-import { motion, useScroll, useTransform } from "framer-motion"
 
 import { FEATURES, type FeatureItem } from "@/components/features/feature-data"
-import { FeatureText } from "@/components/features/feature-text"
-import { FEATURE_VISUALS } from "@/components/features/visuals"
-
-gsap.registerPlugin(ScrollTrigger)
+import {
+  FeatureCta,
+  FeatureDescription,
+  FeatureTagline,
+  FeatureText,
+} from "@/components/features/feature-text"
+import {
+  LabsVisual,
+  RebateVisual,
+  TerminalFeedPanel,
+  TerminalMainPanel,
+} from "@/components/features/visuals"
 
 const STACK_POSITION_PCT = 0.18
 const SCALE_END_PCT = 0.10
 const ITEM_STACK_DISTANCE = 30
 const BASE_SCALE = 0.88
 const ITEM_SCALE = 0.03
+const ENTRY_ROTATE_X = 20
+const ENTRY_SCALE_FROM = 1.05
+const ENTRY_END_PCT = 0.30
 
-interface FeatureRowProps {
+const TERMINAL_ID = "feature-terminal"
+
+const STANDARD_VISUALS: Record<string, () => JSX.Element> = {
+  "feature-rebate": RebateVisual,
+  "feature-labs": LabsVisual,
+}
+
+interface FeatureBodyProps {
   item: FeatureItem
   index: number
 }
 
-function FeatureRow({ item, index }: FeatureRowProps) {
-  const rowRef = useRef<HTMLDivElement>(null)
+function StandardBody({ item, index }: FeatureBodyProps) {
+  const VisualComponent = STANDARD_VISUALS[item.id]
+  if (!VisualComponent) return null
   const textLeft = index % 2 === 0
-  const VisualComponent = FEATURE_VISUALS[index]
+
+  return (
+    <div className="features-row">
+      {textLeft ? (
+        <>
+          <FeatureText item={item} />
+          <VisualComponent />
+        </>
+      ) : (
+        <>
+          <VisualComponent />
+          <FeatureText item={item} />
+        </>
+      )}
+    </div>
+  )
+}
+
+function TerminalBody({ item }: { item: FeatureItem }) {
+  return (
+    <div className="features-terminal-grid">
+      <div className="features-terminal-left">
+        <div>
+          <FeatureTagline item={item} />
+          <div className="mt-9">
+            <FeatureCta item={item} />
+          </div>
+        </div>
+        <TerminalMainPanel />
+      </div>
+      <div className="features-terminal-right">
+        <TerminalFeedPanel />
+        <FeatureDescription item={item} />
+      </div>
+    </div>
+  )
+}
+
+function FeatureRow({ item, index }: FeatureBodyProps) {
+  const rowRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        "[data-sr]",
-        { opacity: 0, y: 28 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.9,
-          ease: "expo.out",
-          stagger: 0.09,
-          scrollTrigger: {
-            trigger: rowRef.current,
-            start: "top 82%",
-          },
-        },
-      )
-    }, rowRef)
+    const row = rowRef.current
+    if (!row) return
+    const items = Array.from(
+      row.querySelectorAll<HTMLElement>("[data-sr]"),
+    )
+    if (!items.length) return
 
-    return () => ctx.revert()
+    items.forEach((el, i) => {
+      el.style.opacity = "0"
+      el.style.transform = "translateY(28px)"
+      el.style.willChange = "opacity, transform"
+      el.style.transition =
+        `opacity 900ms cubic-bezier(0.16, 1, 0.3, 1) ${i * 90}ms, ` +
+        `transform 900ms cubic-bezier(0.16, 1, 0.3, 1) ${i * 90}ms`
+    })
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue
+          items.forEach((el) => {
+            el.style.opacity = "1"
+            el.style.transform = "translateY(0)"
+          })
+          window.setTimeout(() => {
+            items.forEach((el) => {
+              el.style.willChange = ""
+            })
+          }, 900 + items.length * 90)
+          io.disconnect()
+        }
+      },
+      { rootMargin: "0px 0px -18% 0px" },
+    )
+    io.observe(row)
+
+    return () => io.disconnect()
   }, [])
-
-  if (!VisualComponent) return null
 
   const accentStyle = {
     "--accent": item.accent.primary,
@@ -57,6 +128,7 @@ function FeatureRow({ item, index }: FeatureRowProps) {
   } as CSSProperties
 
   const indexLabel = String(index + 1).padStart(2, "0")
+  const isTerminal = item.id === TERMINAL_ID
 
   return (
     <div
@@ -72,19 +144,7 @@ function FeatureRow({ item, index }: FeatureRowProps) {
           <span className="features-meta-divider" />
           <span className="features-meta-product">{item.product}</span>
         </div>
-        <div className="features-row">
-          {textLeft ? (
-            <>
-              <FeatureText item={item} />
-              <VisualComponent />
-            </>
-          ) : (
-            <>
-              <VisualComponent />
-              <FeatureText item={item} />
-            </>
-          )}
-        </div>
+        {isTerminal ? <TerminalBody item={item} /> : <StandardBody item={item} index={index} />}
       </div>
     </div>
   )
@@ -93,17 +153,13 @@ function FeatureRow({ item, index }: FeatureRowProps) {
 export function Features() {
   const stackRef = useRef<HTMLDivElement>(null)
   const entryRef = useRef<HTMLDivElement>(null)
-
-  const { scrollYProgress } = useScroll({
-    target: entryRef,
-    offset: ["start end", "start 30%"],
-  })
-  const rotateX = useTransform(scrollYProgress, [0, 1], [20, 0])
-  const scale = useTransform(scrollYProgress, [0, 1], [1.05, 1])
+  const transformRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const container = stackRef.current
-    if (!container) return
+    const entryEl = entryRef.current
+    const transformEl = transformRef.current
+    if (!container || !entryEl || !transformEl) return
     const cards = Array.from(
       container.querySelectorAll<HTMLElement>("[data-feature-card]"),
     )
@@ -114,14 +170,17 @@ export function Features() {
       card.style.transformOrigin = "top center"
       card.style.backfaceVisibility = "hidden"
     })
+    transformEl.style.willChange = "transform"
+    transformEl.style.transformOrigin = "top center"
+    transformEl.style.backfaceVisibility = "hidden"
 
     let naturalTops: number[] = []
     let endTop = 0
+    let entryTop = 0
     const last = new Map<number, { y: number; s: number }>()
+    let lastEntry: { r: number; s: number } | null = null
     let rafId: number | null = null
 
-    // offsetTop-based; ignores ancestor CSS transforms so the entry
-    // animation's rotateX/scale doesn't bias the stack measurements.
     const absoluteTop = (el: HTMLElement) => {
       let top = 0
       let curr: HTMLElement | null = el
@@ -136,13 +195,16 @@ export function Features() {
       cards.forEach((c) => {
         c.style.transform = ""
       })
+      transformEl.style.transform = ""
       last.clear()
+      lastEntry = null
       naturalTops = cards.map(absoluteTop)
       const endEl = container.querySelector<HTMLElement>(".feature-stack-end")
       endTop = endEl
         ? absoluteTop(endEl)
         : naturalTops[naturalTops.length - 1] +
           cards[cards.length - 1].offsetHeight
+      entryTop = absoluteTop(entryEl)
     }
 
     const update = () => {
@@ -151,6 +213,27 @@ export function Features() {
       const stackPx = STACK_POSITION_PCT * vh
       const scaleEndPx = SCALE_END_PCT * vh
       const pinEnd = endTop - vh / 2
+
+      const entryStart = entryTop - vh
+      const entryEnd = entryTop - ENTRY_END_PCT * vh
+      const ep =
+        scrollTop < entryStart
+          ? 0
+          : scrollTop > entryEnd
+            ? 1
+            : (scrollTop - entryStart) / (entryEnd - entryStart)
+      const rx = ENTRY_ROTATE_X * (1 - ep)
+      const esc = ENTRY_SCALE_FROM - (ENTRY_SCALE_FROM - 1) * ep
+      const nrx = Math.round(rx * 100) / 100
+      const nesc = Math.round(esc * 1000) / 1000
+      if (
+        !lastEntry ||
+        Math.abs(lastEntry.r - nrx) > 0.01 ||
+        Math.abs(lastEntry.s - nesc) > 0.001
+      ) {
+        transformEl.style.transform = `rotateX(${nrx}deg) scale(${nesc})`
+        lastEntry = { r: nrx, s: nesc }
+      }
 
       cards.forEach((card, i) => {
         const cardTop = naturalTops[i]
@@ -216,26 +299,24 @@ export function Features() {
         c.style.transformOrigin = ""
         c.style.backfaceVisibility = ""
       })
+      transformEl.style.transform = ""
+      transformEl.style.willChange = ""
+      transformEl.style.transformOrigin = ""
+      transformEl.style.backfaceVisibility = ""
     }
   }, [])
 
   return (
     <section id="features" className="features-section scroll-mt-24">
       <div ref={entryRef} style={{ perspective: "1200px" }}>
-        <motion.div
-          style={{
-            rotateX,
-            scale,
-            transformOrigin: "top center",
-          }}
-        >
+        <div ref={transformRef}>
           <div ref={stackRef} className="features-bands">
             {FEATURES.map((feature, index) => (
               <FeatureRow key={feature.product} item={feature} index={index} />
             ))}
             <div className="feature-stack-end" aria-hidden />
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   )

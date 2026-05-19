@@ -13,6 +13,7 @@ export interface FeatureItem {
   cta: string
   href: string
   accent: PlatformAccent
+  bg: string
 }
 
 export const FEATURES: FeatureItem[] = [
@@ -23,6 +24,7 @@ export const FEATURES: FeatureItem[] = [
     description: "Execution, position visibility, and settlement in one screen",
     cta: "Open Terminal",
     href: "#",
+    bg: "#0a0a0a",
     accent: {
       primary: "#CAFF5D",
       primaryRgb: "202,255,93",
@@ -37,6 +39,7 @@ export const FEATURES: FeatureItem[] = [
     description: "Automated rebate tracking and payout across all connected venues",
     cta: "Open Rebate",
     href: "#",
+    bg: "#0E0E0F",
     accent: {
       primary: "#FFC93C",
       primaryRgb: "255,201,60",
@@ -51,6 +54,7 @@ export const FEATURES: FeatureItem[] = [
     description: "Distribution, compliance, and integration support for markets entering Korea",
     cta: "Open Labs",
     href: "#",
+    bg: "#0a0a0a",
     accent: {
       primary: "#7AB6FF",
       primaryRgb: "122,182,255",

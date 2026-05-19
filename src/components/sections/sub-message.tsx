@@ -1,5 +1,8 @@
-import { useEffect, useRef, useState } from "react"
-import SplitText from "@/components/ui/SplitText"
+import { useEffect, useRef } from "react"
+import { gsap } from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
+
+gsap.registerPlugin(ScrollTrigger)
 
 const LINES = [
   "Trade together",
@@ -9,51 +12,50 @@ const LINES = [
 
 export function SubMessage() {
   const sectionRef = useRef<HTMLElement>(null)
-  const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
     const section = sectionRef.current
     if (!section) return
 
-    const handle = () => {
-      const { top, height } = section.getBoundingClientRect()
-      const scrollable = height - window.innerHeight
-      const progress = Math.max(0, Math.min(1, -top / scrollable))
-      setCurrentIndex(Math.min(Math.floor(progress * LINES.length), LINES.length - 1))
-    }
+    const items = section.querySelectorAll<HTMLElement>("[data-sm]")
+    if (!items.length) return
 
-    window.addEventListener("scroll", handle, { passive: true })
-    handle()
-    return () => window.removeEventListener("scroll", handle)
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        items,
+        { opacity: 0, filter: "blur(12px)" },
+        {
+          opacity: 1,
+          filter: "blur(0px)",
+          duration: 0.7,
+          ease: "power2.out",
+          stagger: 0.6,
+          scrollTrigger: {
+            trigger: section,
+            start: "top 75%",
+            once: true,
+          },
+        },
+      )
+    }, section)
+
+    return () => ctx.revert()
   }, [])
 
   return (
     <section ref={sectionRef} className="sub-section">
       <div className="sub-sticky">
         <div className="sub-inner">
-          <div className="relative">
-            {LINES.map((line, i) => (
-              <div
-                key={i}
-                className={`sub-line${i > 0 ? " sub-line-stacked" : ""}`}
-                style={{
-                  opacity: i === currentIndex ? 1 : 0,
-                  pointerEvents: i === currentIndex ? "auto" : "none",
-                }}
+          <div className="flex flex-col items-center text-center">
+            {LINES.map((line) => (
+              <span
+                key={line}
+                data-sm
+                className="sub-text"
+                style={{ opacity: 0, filter: "blur(12px)" }}
               >
-                <SplitText
-                  text={line}
-                  animate={i === currentIndex}
-                  className="sub-text"
-                  delay={40}
-                  duration={1.25}
-                  ease="power3.out"
-                  splitType="chars"
-                  from={{ opacity: 0, y: 40 }}
-                  to={{ opacity: 1, y: 0 }}
-                  textAlign="center"
-                />
-              </div>
+                {line}
+              </span>
             ))}
           </div>
         </div>

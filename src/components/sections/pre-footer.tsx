@@ -1,38 +1,57 @@
 import { useEffect, useRef } from "react"
 import { gsap } from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { GlowButton } from "@/components/ui/glow-button"
 import { ShinyButton } from "@/components/ui/shiny-button"
 import AnimatedGradientBackground from "@/components/ui/animated-gradient-bg"
-
-gsap.registerPlugin(ScrollTrigger)
 
 const GRADIENT_COLORS = ["#0A0A0A", "#101f02", "#0b1f10", "#071408", "#040d04", "#030808", "#0A0A0A"]
 const GRADIENT_STOPS  = [35, 50, 60, 70, 80, 90, 100]
 
 export function PreFooter() {
   const containerRef = useRef<HTMLDivElement>(null)
+  const glowRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        "[data-pf]",
-        { opacity: 0, y: 32 },
-        {
+    const el = containerRef.current
+    if (!el) return
+
+    let fired = false
+    const play = () => {
+      if (fired) return
+      fired = true
+
+      gsap.to(el.querySelectorAll("[data-pf]"), {
+        opacity: 1,
+        y: 0,
+        duration: 0.9,
+        ease: "power3.out",
+        stagger: 0.12,
+      })
+
+      if (glowRef.current) {
+        gsap.to(glowRef.current, {
           opacity: 1,
-          y: 0,
-          duration: 0.9,
-          ease: "power3.out",
-          stagger: 0.12,
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 80%",
-            once: true,
-          },
+          duration: 1.4,
+          ease: "power2.out",
+          delay: 2,
+        })
+      }
+    }
+
+    gsap.set(el.querySelectorAll("[data-pf]"), { y: 32 })
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          play()
+          observer.disconnect()
         }
-      )
-    }, containerRef)
-    return () => ctx.revert()
+      },
+      { rootMargin: "0px 0px -15% 0px" }
+    )
+    observer.observe(el)
+
+    return () => observer.disconnect()
   }, [])
 
   return (
@@ -51,8 +70,16 @@ export function PreFooter() {
         <h2 data-pf style={{ opacity: 0 }} className="pre-footer-heading">
           ReboundX defines
           <br />
-          <span className="pre-footer-highlight" style={{ filter: "url(#pf-glow)" }}>
+          <span className="pre-footer-highlight">
             <span className="pre-footer-gradient-text">what trade can be</span>
+            <span
+              ref={glowRef}
+              aria-hidden
+              className="pre-footer-gradient-text absolute inset-0"
+              style={{ filter: "url(#pf-glow)", opacity: 0 }}
+            >
+              what trade can be
+            </span>
           </span>
         </h2>
 

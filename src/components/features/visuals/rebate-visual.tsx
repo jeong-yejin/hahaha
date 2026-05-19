@@ -1,63 +1,208 @@
-import { AppChrome, VisualContainer, Dropdown } from "./visual-shell"
-
-const REBATE_BARS = [38, 55, 42, 70, 61, 83, 75]
-
-const FILLS = [
-  { id: "#1847", venue: "Binance", side: "BUY", size: "0.0023 BTC", price: "$67,841", rebate: "+$0.38", status: "settled" },
-  { id: "#1846", venue: "OKX", side: "SELL", size: "0.0019 BTC", price: "$67,839", rebate: "+$0.31", status: "settled" },
-  { id: "#1845", venue: "Bybit", side: "BUY", size: "0.0031 BTC", price: "$67,844", rebate: "+$0.49", status: "settled" },
-  { id: "#1844", venue: "Binance", side: "BUY", size: "0.0017 BTC", price: "$67,838", rebate: "+$0.27", status: "pending" },
+const ROWS = [
+  { date: "2026-04-02", volume: "$142,883", rate: "55%", onChain: "+$491.28", payback: "+$491.28", payout: "2026-04-03" },
+  { date: "2026-04-01", volume: "$156,420", rate: "55%", onChain: "+$537.94", payback: "+$537.94", payout: "2026-04-02" },
+  { date: "2026-03-30", volume: "$148,761", rate: "55%", onChain: "+$510.73", payback: "+$510.73", payout: "2026-04-01" },
+  { date: "2026-03-22", volume: "$164,778", rate: "55%", onChain: "+$564.38", payback: "+$564.38", payout: "2026-04-01" },
 ]
+
+const HEADERS = ["Trade Date", "Trading Volume", "Rate (%)", "On-Chain", "Payback Amount", "Payout Date", "Method"]
+
+const s = {
+  cell: { color: "#A6A6A6", fontSize: 10, fontFamily: "Inter", fontWeight: 400, lineHeight: "15px", letterSpacing: 0.10 } as React.CSSProperties,
+  cellVal: { color: "#A3A3A3", fontSize: 10, fontFamily: "Inter", fontWeight: 500, lineHeight: "15px", letterSpacing: 0.10 } as React.CSSProperties,
+}
 
 export function RebateVisual() {
   return (
-    <VisualContainer>
-      <div className="absolute inset-0 flex flex-col overflow-hidden">
-        <AppChrome right={<span className="font-mono text-[11px] font-semibold text-white/50">ReboundX Rebate</span>} />
-        <div className="flex shrink-0 items-center gap-2 border-b border-white/[0.05] px-3.5 py-2">
-          <Dropdown label="All venues" />
-          <Dropdown label="This week" />
-          <Dropdown label="USD" />
-          <div className="ml-auto flex items-baseline gap-2">
-            <span className="font-mono text-[18px] font-bold text-white">
-              $4,821<span className="text-[13px] text-[#CAFF5D]">.36</span>
-            </span>
-            <span className="rounded-full bg-[#CAFF5D]/10 px-1.5 py-0.5 font-mono text-[9px] text-[#CAFF5D]">+18.4%</span>
+    <div style={{
+      width: "100%",
+      padding: 16,
+      position: "relative",
+      background: "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 100%), #07070C",
+      boxShadow: "0px 0px 24px rgba(255,255,255,0.04) inset",
+      overflow: "hidden",
+      borderTopLeftRadius: 8,
+      borderTopRightRadius: 8,
+      borderLeft: "1px solid rgba(255,255,255,0.10)",
+      borderTop: "1px solid rgba(255,255,255,0.10)",
+      borderRight: "1px solid rgba(255,255,255,0.10)",
+      display: "flex",
+      flexDirection: "column",
+      gap: 16,
+    }}>
+      {/* Lime glow */}
+      <div aria-hidden style={{
+        width: 548, height: 385,
+        position: "absolute", left: 337, top: -252,
+        transform: "rotate(-6deg)", transformOrigin: "top left",
+        opacity: 0.15,
+        background: "linear-gradient(180deg, #BAFF38 0%, #FFFF38 100%)",
+        filter: "blur(50px)",
+        pointerEvents: "none",
+      }} />
+
+      {/* Title */}
+      <div style={{ color: "white", fontSize: 15, fontFamily: "Inter", fontWeight: 500, lineHeight: "18px" }}>
+        Exchange Rebate Details
+      </div>
+
+      {/* UID badge */}
+      <div style={{
+        paddingLeft: 16, paddingRight: 16, paddingTop: 8, paddingBottom: 8,
+        background: "rgba(255,255,255,0.02)",
+        boxShadow: "0px 0px 24px 1px rgba(255,255,255,0.06) inset",
+        borderRadius: 6,
+        outline: "1px solid rgba(255,255,255,0.05)",
+        display: "inline-flex", alignItems: "center", gap: 12,
+      }}>
+        <span style={{ color: "#D4D4D4", fontSize: 12, fontFamily: "Inter", fontWeight: 400 }}>UID</span>
+        <span style={{ color: "white", fontSize: 12, fontFamily: "Inter", fontWeight: 500 }}>12048293</span>
+      </div>
+
+      {/* Stat cards */}
+      <div style={{ display: "flex", gap: 8 }}>
+        {[
+          { label: "Total Payback Earned", value: "2,104.33" },
+          { label: "Total Trading Volume", value: "612,842" },
+        ].map(({ label, value }) => (
+          <div key={label} style={{
+            flex: 1,
+            paddingLeft: 16, paddingRight: 16, paddingTop: 8, paddingBottom: 8,
+            background: "radial-gradient(ellipse 63.59% 47.44% at 50% 50%, rgba(202,255,93,0) 0%, rgba(202,255,93,0.06) 100%)",
+            boxShadow: "0px 0px 24px 1px rgba(255,255,255,0.06) inset",
+            borderRadius: 6,
+            outline: "1px solid rgba(255,255,255,0.05)",
+            display: "flex", flexDirection: "column", gap: 12,
+          }}>
+            <div style={{ color: "#D4D4D4", fontSize: 10, fontFamily: "Inter", fontWeight: 400 }}>{label}</div>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 2 }}>
+              <span style={{ color: "white", fontSize: 14, fontFamily: "Inter", fontWeight: 500 }}>{value}</span>
+              <span style={{ color: "white", fontSize: 10, fontFamily: "Inter", fontWeight: 300 }}>USDT</span>
+            </div>
           </div>
-        </div>
-        <div className="flex h-14 shrink-0 items-end gap-1 border-b border-white/[0.05] px-3.5 py-2.5">
-          {REBATE_BARS.map((height, index) => (
-            <div
-              key={index}
-              className="flex-1 rounded-t-[2px]"
-              style={{ height: `${height}%`, background: index === 6 ? "#CAFF5D" : "rgba(202,255,93,0.14)" }}
-            />
+        ))}
+      </div>
+
+      {/* Table */}
+      <div style={{
+        padding: 8,
+        background: "rgba(255,255,255,0.02)",
+        boxShadow: "0px 0px 24px 1px rgba(255,255,255,0.06) inset",
+        borderRadius: 8,
+        outline: "1px solid rgba(255,255,255,0.05)",
+        display: "flex", flexDirection: "column", gap: 8,
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: 8,
+          background: "rgba(255,255,255,0.02)",
+          display: "flex", justifyContent: "space-between",
+        }}>
+          {HEADERS.map(h => (
+            <div key={h} style={s.cell}>{h}</div>
           ))}
         </div>
-        <div className="grid shrink-0 grid-cols-[40px_1fr_44px_80px_60px_52px_52px] border-b border-white/[0.05] px-3.5 py-1.5">
-          {["ID", "Venue", "Side", "Size", "Price", "Rebate", "Status"].map((heading) => (
-            <span key={heading} className="font-mono text-[8px] uppercase tracking-wider text-white/20">{heading}</span>
-          ))}
-        </div>
-        <div className="flex flex-1 flex-col">
-          {FILLS.map((fill) => (
-            <div key={fill.id} className="grid grid-cols-[40px_1fr_44px_80px_60px_52px_52px] items-center border-b border-white/[0.03] px-3.5 py-[5px]">
-              <span className="font-mono text-[9px] text-white/25">{fill.id}</span>
-              <span className="font-mono text-[10px] text-white/60">{fill.venue}</span>
-              <span className={`font-mono text-[10px] ${fill.side === "BUY" ? "text-[#CAFF5D]/80" : "text-[#FF6B6B]/80"}`}>{fill.side}</span>
-              <span className="font-mono text-[10px] text-white/40">{fill.size}</span>
-              <span className="font-mono text-[10px] text-white/30">{fill.price}</span>
-              <span className="font-mono text-[10px] text-[#CAFF5D]">{fill.rebate}</span>
-              <span className={`w-fit rounded-full px-1.5 py-0.5 font-mono text-[8px] ${fill.status === "settled" ? "bg-[#CAFF5D]/10 text-[#CAFF5D]" : "bg-white/5 text-white/30"}`}>{fill.status}</span>
+
+        {/* Rows */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {ROWS.map((row, i) => (
+            <div key={row.date} style={{
+              paddingLeft: 8, paddingRight: 8, paddingTop: 12, paddingBottom: 12,
+              display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+              borderBottom: i < ROWS.length - 1 ? "1px solid rgba(255,255,255,0.06)" : undefined,
+            }}>
+              <span style={{ ...s.cellVal, fontWeight: 400, width: 58 }}>{row.date}</span>
+              <span style={{ ...s.cellVal, width: 75 }}>{row.volume}</span>
+              <span style={{ ...s.cellVal, width: 41 }}>{row.rate}</span>
+              <span style={{ ...s.cellVal, width: 50 }}>{row.onChain}</span>
+              <span style={{ ...s.cellVal, width: 82 }}>{row.payback}</span>
+              <span style={{ ...s.cellVal, fontWeight: 400 }}>{row.payout}</span>
+              <div style={{
+                paddingLeft: 4, paddingRight: 4,
+                background: "rgba(34,197,94,0.16)",
+                borderRadius: 4,
+                display: "flex", alignItems: "center", gap: 4,
+              }}>
+                <span style={{ color: "#22C55E", fontSize: 10, fontFamily: "Manrope", fontWeight: 700, lineHeight: "15px", letterSpacing: 0.15 }}>
+                  On-chain
+                </span>
+              </div>
             </div>
           ))}
         </div>
-        <div className="flex shrink-0 items-center justify-between border-t border-white/[0.05] px-3.5 py-1.5">
-          <span className="font-mono text-[8px] text-white/20">COUNT 12,847</span>
-          <span className="font-mono text-[8px] text-white/20">1-4 of 12,847 · PAGE 1 of 3,212</span>
-        </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-[#07070C] to-transparent" />
       </div>
-    </VisualContainer>
+
+      {/* Share PnL card (floating) */}
+      <div style={{
+        position: "absolute", left: 254, top: 160,
+        padding: "11px 16px",
+        background: "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 100%), #07070C",
+        boxShadow: "0px 0px 24px rgba(255,255,255,0.04) inset",
+        overflow: "hidden",
+        borderRadius: 12,
+        outline: "1px solid rgba(255,255,255,0.10)",
+        display: "flex", flexDirection: "column", gap: 9,
+      }}>
+        {/* Inner glow */}
+        <div aria-hidden style={{
+          width: 351, height: 105,
+          position: "absolute", left: -9, top: 150,
+          background: "rgba(214,253,116,0.60)",
+          borderRadius: 9999,
+          filter: "blur(118px)",
+          pointerEvents: "none",
+        }} />
+
+        <div style={{ color: "rgba(255,255,255,0.80)", fontSize: 12, fontFamily: "Inter", fontWeight: 500, lineHeight: "15.6px" }}>
+          Share PnL
+        </div>
+
+        <div style={{
+          width: 250,
+          padding: 12,
+          background: "rgba(255,255,255,0.02)",
+          boxShadow: "0px 0px 24px 1px rgba(255,255,255,0.06) inset",
+          borderRadius: 6,
+          outline: "1px solid rgba(255,255,255,0.05)",
+          display: "flex", flexDirection: "column", gap: 12,
+        }}>
+          {/* Top row: +55% + fees */}
+          <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+            <span style={{ color: "rgba(255,255,255,0.80)", fontSize: 20, fontFamily: "Inter", fontWeight: 500, lineHeight: "24px" }}>
+              +55%
+            </span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <span style={{ color: "rgba(255,255,255,0.36)", fontSize: 10, fontFamily: "Inter", fontWeight: 400, lineHeight: "12px" }}>
+                Total Trading Fees
+              </span>
+              <span style={{ color: "rgba(255,255,255,0.80)", fontSize: 12, fontFamily: "Inter", fontWeight: 600, lineHeight: "14.4px" }}>
+                3,826.05 USDT
+              </span>
+            </div>
+          </div>
+
+          {/* Bottom row: payback + rate */}
+          <div style={{ display: "flex", gap: 11 }}>
+            {[
+              { label: "Total Payback", value: "3,826.05 USDT", lime: false },
+              { label: "Payback Rate", value: "55%", lime: true },
+            ].map(({ label, value, lime }) => (
+              <div key={label} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                <span style={{ color: "rgba(255,255,255,0.36)", fontSize: 10, fontFamily: "Inter", fontWeight: 400, lineHeight: "12px" }}>
+                  {label}
+                </span>
+                <span style={{
+                  fontSize: 12, fontFamily: "Inter", lineHeight: "14.4px",
+                  fontWeight: lime ? 400 : 600,
+                  color: lime ? "rgba(202,255,93,0.70)" : "rgba(255,255,255,0.80)",
+                }}>
+                  {value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }

@@ -1,81 +1,226 @@
-import { AppChrome, VisualContainer, Pill } from "./visual-shell"
+import { useEffect, useRef } from "react"
+import { geoEquirectangular, geoPath } from "d3-geo"
+import { feature } from "topojson-client"
+import type { Topology, GeometryCollection } from "topojson-specification"
+import type { Feature, MultiPolygon } from "geojson"
+import worldData from "world-atlas/land-110m.json"
 
-const STEPS = [
-  { label: "Entity registration", done: true },
-  { label: "Compliance review", done: true },
-  { label: "Exchange integration", done: true },
-  { label: "Live go-to-market", done: false },
+function MapCanvas() {
+  const ref = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = ref.current
+    if (!canvas) return
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    const w = canvas.width
+    const h = canvas.height
+
+    const topology = worldData as unknown as Topology
+    const land = feature(
+      topology,
+      topology.objects.land as GeometryCollection,
+    ) as unknown as Feature<MultiPolygon>
+
+    // Scale/translate derived from the user-specified dot positions so the
+    // cities (Seoul, Tokyo, London, NY, Jakarta…) align with the rendered map.
+    const projection = geoEquirectangular()
+      .scale(121.7)
+      .translate([201, 340])
+
+    const off = document.createElement("canvas")
+    off.width = w
+    off.height = h
+    const offCtx = off.getContext("2d")
+    if (!offCtx) return
+
+    offCtx.fillStyle = "#fff"
+    offCtx.beginPath()
+    geoPath(projection, offCtx)(land)
+    offCtx.fill()
+
+    const data = offCtx.getImageData(0, 0, w, h).data
+
+    ctx.clearRect(0, 0, w, h)
+    const step = 5
+    const r = 1.4
+    ctx.fillStyle = "#444E57"
+
+    for (let px = step / 2; px < w; px += step) {
+      for (let py = step / 2; py < h; py += step) {
+        const idx = (Math.floor(py) * w + Math.floor(px)) * 4
+        if (data[idx + 3] > 128) {
+          ctx.beginPath()
+          ctx.arc(px, py, r, 0, Math.PI * 2)
+          ctx.fill()
+        }
+      }
+    }
+  }, [])
+
+  return (
+    <canvas
+      ref={ref}
+      width={555}
+      height={483}
+      aria-hidden
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+    />
+  )
+}
+
+// Coordinates from Figma (relative to 555×483 inner card)
+const LIME = "#CAFF5D"
+const LIGHT_LIME = "#E6FFB3"
+
+const SMALL_DOTS = [
+  { x: 471, y: 263, color: LIME },
+  { x: 470, y: 256, color: LIME },
+  { x: 494, y: 257, color: LIGHT_LIME },
+  { x: 295, y: 321, color: LIGHT_LIME },
+  { x: 42,  y: 257, color: LIGHT_LIME },
+  { x: 201, y: 228, color: LIGHT_LIME },
+  { x: 429, y: 357, color: LIGHT_LIME },
 ]
 
-const EXCHANGES = [
-  { name: "Upbit", region: "Korea", pairs: 214, vol: "KRW 1.8T", users: "8.2M", status: "live" as const },
-  { name: "Bithumb", region: "Korea", pairs: 187, vol: "KRW 0.6T", users: "3.1M", status: "live" as const },
-  { name: "Coinone", region: "Korea", pairs: 96, vol: "KRW 0.2T", users: "1.4M", status: "setup" as const },
+const GLOWS = [
+  { x: 461, y: 252, size: 20, color: LIME,       blur: 22 },
+  { x: 494, y: 254, size: 10, color: LIGHT_LIME, blur: 21 },
+  { x: 429, y: 357, size: 10, color: LIGHT_LIME, blur: 21 },
+  { x: 294, y: 318, size: 10, color: LIGHT_LIME, blur: 21 },
+  { x: 41,  y: 254, size: 10, color: LIGHT_LIME, blur: 21 },
+  { x: 198, y: 225, size: 10, color: LIGHT_LIME, blur: 21 },
 ]
+
+const W = 555
+const H = 483
+const pct = (v: number, total: number) => `${(v / total) * 100}%`
+
+function KoreanFlag({ size = 12 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 16" width={size} height={size * (16 / 24)} aria-hidden>
+      <rect width="24" height="16" fill="#ffffff" />
+      <g transform="translate(12 8)">
+        <circle r="4" fill="#CD2E3A" />
+        <path d="M -4 0 A 4 4 0 0 1 4 0 A 2 2 0 0 1 0 0 A 2 2 0 0 0 -4 0 Z" fill="#0047A0" />
+      </g>
+      <g fill="#000" stroke="none">
+        <rect x="2" y="2"  width="3" height="0.6" />
+        <rect x="2" y="3.2" width="3" height="0.6" />
+        <rect x="2" y="4.4" width="3" height="0.6" />
+        <rect x="19" y="2"  width="3" height="0.6" />
+        <rect x="19" y="3.2" width="3" height="0.6" />
+        <rect x="19" y="4.4" width="3" height="0.6" />
+        <rect x="2" y="11"  width="3" height="0.6" />
+        <rect x="2" y="12.2" width="3" height="0.6" />
+        <rect x="2" y="13.4" width="3" height="0.6" />
+        <rect x="19" y="11"  width="3" height="0.6" />
+        <rect x="19" y="12.2" width="3" height="0.6" />
+        <rect x="19" y="13.4" width="3" height="0.6" />
+      </g>
+    </svg>
+  )
+}
 
 export function LabsVisual() {
   return (
-    <VisualContainer>
-      <div className="absolute inset-0 flex flex-col overflow-hidden">
-        <AppChrome
-          right={
-            <>
-              <span className="font-mono text-[11px] font-semibold text-white/50">ReboundX Labs</span>
-              <div className="ml-auto flex items-center gap-1.5 rounded-full border border-[#CAFF5D]/20 bg-[#CAFF5D]/10 px-2.5 py-0.5">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#CAFF5D]" />
-                <span className="font-mono text-[9px] uppercase tracking-wider text-[#CAFF5D]">Active</span>
-              </div>
-            </>
-          }
-        />
-        <div className="flex shrink-0 items-center gap-1.5 border-b border-white/[0.05] px-3.5 py-2">
-          <Pill active>Korea</Pill>
-          <Pill>Singapore</Pill>
-          <Pill>Japan</Pill>
+    <div style={{
+      width: "100%",
+      padding: 16,
+      position: "relative",
+      background: "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 100%), #07070C",
+      boxShadow: "0px 0px 24px rgba(255,255,255,0.04) inset",
+      overflow: "hidden",
+      borderTopLeftRadius: 8,
+      borderTopRightRadius: 8,
+      borderLeft: "1px solid rgba(255,255,255,0.10)",
+      borderTop: "1px solid rgba(255,255,255,0.10)",
+      borderRight: "1px solid rgba(255,255,255,0.10)",
+    }}>
+      <div style={{
+        position: "relative",
+        width: "100%",
+        aspectRatio: `${W} / ${H}`,
+        overflow: "hidden",
+        borderRadius: 6,
+      }}>
+        {/* Ambient lime gradient blur */}
+        <div aria-hidden style={{
+          position: "absolute",
+          left: "-45%", top: "61%",
+          width: "115%", height: "110%",
+          background: "linear-gradient(180deg, #BAFF38 0%, #FFFF38 100%)",
+          opacity: 0.15,
+          filter: "blur(240px)",
+          pointerEvents: "none",
+        }} />
+
+        {/* World map */}
+        <MapCanvas />
+
+        {/* Glow halos */}
+        {GLOWS.map((g, i) => (
+          <div
+            key={`glow-${i}`}
+            aria-hidden
+            style={{
+              position: "absolute",
+              left: pct(g.x - g.size / 2, W),
+              top: pct(g.y - g.size / 2, H),
+              width: pct(g.size, W),
+              aspectRatio: "1 / 1",
+              borderRadius: "50%",
+              background: g.color,
+              filter: `blur(${g.blur}px)`,
+              opacity: 0.7,
+              pointerEvents: "none",
+            }}
+          />
+        ))}
+
+        {/* Small lime dots */}
+        {SMALL_DOTS.map((d, i) => (
+          <div
+            key={`dot-${i}`}
+            aria-hidden
+            style={{
+              position: "absolute",
+              left: pct(d.x - 3, W),
+              top: pct(d.y - 3, H),
+              width: pct(6, W),
+              aspectRatio: "1 / 1",
+              borderRadius: "50%",
+              background: d.color,
+              boxShadow: `0 0 6px ${d.color}`,
+            }}
+          />
+        ))}
+
+        {/* SE [flag] UL tagline */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            left: pct(439, W),
+            top: pct(238, H),
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            color: "#F5F5F5",
+            fontSize: 11,
+            fontFamily: "Manrope, Inter, sans-serif",
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            lineHeight: "14px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <span>SE</span>
+          <KoreanFlag size={12} />
+          <span>UL</span>
         </div>
-        <div className="flex shrink-0 items-center border-b border-white/[0.05] px-4 py-3">
-          {STEPS.map((step, index) => (
-            <div key={step.label} className="flex flex-1 items-center last:flex-none">
-              <div className="flex flex-col items-center gap-1">
-                <div className={`flex h-4 w-4 items-center justify-center rounded-full ${step.done ? "bg-[#CAFF5D]/15 ring-1 ring-[#CAFF5D]/30" : "bg-white/5 ring-1 ring-white/10"}`}>
-                  {step.done ? <span className="h-1.5 w-1.5 rounded-full bg-[#CAFF5D]" /> : <span className="h-1.5 w-1.5 rounded-full bg-white/15" />}
-                </div>
-                <span className={`whitespace-nowrap font-mono text-[8px] ${step.done ? "text-[#CAFF5D]/60" : "text-white/20"}`}>{step.label.split(" ")[0]}</span>
-              </div>
-              {index < STEPS.length - 1 && <div className={`mx-1.5 mb-3 h-px flex-1 ${step.done ? "bg-[#CAFF5D]/25" : "bg-white/[0.08]"}`} />}
-            </div>
-          ))}
-        </div>
-        <div className="grid shrink-0 grid-cols-[1fr_52px_44px_52px_44px_44px] border-b border-white/[0.05] px-3.5 py-1.5">
-          {["Exchange", "Region", "Pairs", "Daily Vol", "Users", "Status"].map((heading) => (
-            <span key={heading} className="font-mono text-[8px] uppercase tracking-wider text-white/20">{heading}</span>
-          ))}
-        </div>
-        <div className="flex flex-1 flex-col">
-          {EXCHANGES.map((exchange) => (
-            <div key={exchange.name} className="grid grid-cols-[1fr_52px_44px_52px_44px_44px] items-center border-b border-white/[0.03] px-3.5 py-[7px]">
-              <div className="flex items-center gap-2">
-                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-white/[0.05]">
-                  <span className="font-mono text-[8px] font-bold text-white/40">{exchange.name[0]}</span>
-                </div>
-                <span className="font-mono text-[11px] text-white/75">{exchange.name}</span>
-              </div>
-              <span className="font-mono text-[10px] text-white/35">{exchange.region}</span>
-              <span className="font-mono text-[10px] text-white/50">{exchange.pairs}</span>
-              <span className="font-mono text-[10px] text-white/50">{exchange.vol}</span>
-              <span className="font-mono text-[10px] text-white/35">{exchange.users}</span>
-              <span className={`w-fit rounded-full px-1.5 py-0.5 font-mono text-[8px] ${exchange.status === "live" ? "bg-[#CAFF5D]/10 text-[#CAFF5D]" : "bg-white/5 text-white/25"}`}>
-                {exchange.status === "live" ? "Live" : "Setup"}
-              </span>
-            </div>
-          ))}
-        </div>
-        <div className="flex shrink-0 items-center justify-between border-t border-white/[0.05] px-3.5 py-1.5">
-          <span className="font-mono text-[8px] text-white/20">3 exchanges · 2 live · 1 setup</span>
-          <span className="font-mono text-[8px] text-white/20">KRW total 2.6T daily</span>
-        </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-[#07070C] to-transparent" />
       </div>
-    </VisualContainer>
+    </div>
   )
 }

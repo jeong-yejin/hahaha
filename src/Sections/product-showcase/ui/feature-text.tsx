@@ -1,6 +1,6 @@
 import { ArrowUpRight } from "lucide-react"
 
-import type { FeatureItem } from "@/features/product-showcase/model/feature-data"
+import type { FeatureItem } from "@/Sections/product-showcase/model/feature-data"
 
 interface FeatureTextProps {
   item: FeatureItem
@@ -24,7 +24,7 @@ export function FeatureTagline({ item }: FeatureTextProps) {
 
 export function FeatureDescription({ item }: FeatureTextProps) {
   return (
-    <p data-sr className="max-w-[340px] text-[24px] leading-[1.3] tracking-[-0.02em] text-[#D4D4D4]">
+    <p data-sr className="max-w-[28ch] text-[24px] leading-[1.4] tracking-[-0.02em] text-[#D4D4D4]">
       {item.description}
     </p>
   )

@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 
-import { SUB_MESSAGE_LINES } from "@/features/sub-message/model/sub-message-copy"
+import { SUB_MESSAGE_LINES } from "@/Sections/sub-message/model/sub-message-copy"
 import { useReducedMotion } from "@/shared/hooks/use-reduced-motion"
 
 gsap.registerPlugin(ScrollTrigger)

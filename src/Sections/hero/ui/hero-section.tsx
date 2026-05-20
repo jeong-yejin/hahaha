@@ -1,6 +1,6 @@
 import { useRef } from "react"
 import { ChevronDown } from "lucide-react"
-import { useHeroIntroAnimation } from "@/features/hero/hooks/use-hero-intro-animation"
+import { useHeroIntroAnimation } from "@/Sections/hero/hooks/use-hero-intro-animation"
 import { useMagnetic } from "@/shared/hooks/use-magnetic"
 
 export function HeroSection() {

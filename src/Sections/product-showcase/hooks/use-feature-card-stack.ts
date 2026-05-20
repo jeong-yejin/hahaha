@@ -1,13 +1,15 @@
 import { useEffect, type RefObject } from "react"
 
 const STACK_POSITION_PCT = 0.18
-const SCALE_END_PCT = 0.10
+const SCALE_END_PCT = 0.04
 const ITEM_STACK_DISTANCE = 30
 const BASE_SCALE = 0.88
 const ITEM_SCALE = 0.03
 const ENTRY_ROTATE_X = 20
 const ENTRY_SCALE_FROM = 1.05
 const ENTRY_END_PCT = 0.30
+
+const easeOutCubic = (p: number) => 1 - Math.pow(1 - p, 3)
 
 interface FeatureCardStackRefs {
   stackRef: RefObject<HTMLDivElement | null>
@@ -49,6 +51,12 @@ export function useFeatureCardStack({
       container.querySelectorAll<HTMLElement>("[data-feature-card]"),
     )
     if (!cards.length) return
+
+    const motionQuery =
+      typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-reduced-motion: reduce)")
+        : null
+    let prefersReducedMotion = motionQuery?.matches ?? false
 
     cards.forEach((card) => {
       card.style.willChange = "transform"
@@ -94,8 +102,11 @@ export function useFeatureCardStack({
       const entryStart = entryTop - vh
       const entryEnd = entryTop - ENTRY_END_PCT * vh
       const entryProgress = progressBetween(scrollTop, entryStart, entryEnd)
-      const rotateX = ENTRY_ROTATE_X * (1 - entryProgress)
-      const entryScale = ENTRY_SCALE_FROM - (ENTRY_SCALE_FROM - 1) * entryProgress
+      const easedEntry = easeOutCubic(entryProgress)
+      const rotateX = prefersReducedMotion ? 0 : ENTRY_ROTATE_X * (1 - easedEntry)
+      const entryScale = prefersReducedMotion
+        ? 1
+        : ENTRY_SCALE_FROM - (ENTRY_SCALE_FROM - 1) * easedEntry
       const roundedRotateX = Math.round(rotateX * 100) / 100
       const roundedEntryScale = Math.round(entryScale * 1000) / 1000
 
@@ -113,8 +124,9 @@ export function useFeatureCardStack({
         const pinStart = cardTop - stackPx - ITEM_STACK_DISTANCE * index
         const triggerEnd = cardTop - scaleEndPx
         const stackProgress = progressBetween(scrollTop, pinStart, triggerEnd)
+        const easedProgress = easeOutCubic(stackProgress)
         const targetScale = BASE_SCALE + index * ITEM_SCALE
-        const scale = 1 - stackProgress * (1 - targetScale)
+        const scale = 1 - easedProgress * (1 - targetScale)
 
         let translateY = 0
         if (scrollTop >= pinStart && scrollTop <= pinEnd) {
@@ -154,9 +166,15 @@ export function useFeatureCardStack({
       update()
     }
 
+    const onMotionChange = (event: MediaQueryListEvent) => {
+      prefersReducedMotion = event.matches
+      scheduleUpdate()
+    }
+
     measureAndUpdate()
     window.addEventListener("scroll", scheduleUpdate, { passive: true })
     window.addEventListener("resize", measureAndUpdate)
+    motionQuery?.addEventListener("change", onMotionChange)
 
     const resizeObserver =
       typeof ResizeObserver === "undefined"
@@ -168,6 +186,7 @@ export function useFeatureCardStack({
     return () => {
       window.removeEventListener("scroll", scheduleUpdate)
       window.removeEventListener("resize", measureAndUpdate)
+      motionQuery?.removeEventListener("change", onMotionChange)
       resizeObserver?.disconnect()
       if (rafId !== null) cancelAnimationFrame(rafId)
 

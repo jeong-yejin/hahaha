@@ -1,8 +1,8 @@
 import { useRef } from "react"
 
-import { useFeatureCardStack } from "@/features/product-showcase/hooks/use-feature-card-stack"
-import { FEATURES } from "@/features/product-showcase/model/feature-data"
-import { ProductFeatureCard } from "@/features/product-showcase/ui/feature-card"
+import { useFeatureCardStack } from "@/Sections/product-showcase/hooks/use-feature-card-stack"
+import { FEATURES } from "@/Sections/product-showcase/model/feature-data"
+import { ProductFeatureCard } from "@/Sections/product-showcase/ui/feature-card"
 
 export function ProductFeaturesSection() {
   const stackRef = useRef<HTMLDivElement>(null)

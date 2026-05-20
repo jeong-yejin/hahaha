@@ -149,7 +149,7 @@ export function VisualContainer({ children }: BezelProps) {
             transform: "rotate(-6deg)",
             transformOrigin: "top left",
             opacity: 0.18,
-            background: "linear-gradient(180deg, var(--atmosphere-from, #BAFF38) 0%, var(--atmosphere-to, #FFFF38) 100%)",
+            background: "linear-gradient(180deg, #BAFF38 0%, #FFFF38 100%)",
             filter: "blur(50px)",
             overflow: "hidden",
             pointerEvents: "none",

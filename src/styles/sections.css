@@ -131,7 +131,7 @@
     pointer-events: none;
     background: radial-gradient(
       ellipse 70% 50% at 50% 50%,
-      rgba(var(--accent-rgb, 202, 255, 93), calc(0.08 * var(--card-progress))) 0%,
+      rgba(202, 255, 93, calc(0.08 * var(--card-progress))) 0%,
       transparent 70%
     );
     opacity: var(--card-progress);

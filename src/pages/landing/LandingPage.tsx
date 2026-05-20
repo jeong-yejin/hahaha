@@ -1,9 +1,9 @@
 import { GrainOverlay } from "@/app/effects/grain-overlay"
 import { CursorGlow } from "@/shared/effects/cursor-glow"
-import { HeroSection } from "@/features/hero/ui/hero-section"
-import { PreFooterSection } from "@/features/pre-footer/ui/pre-footer-section"
-import { ProductFeaturesSection } from "@/features/product-showcase/ui/product-features-section"
-import { SubMessageSection } from "@/features/sub-message/ui/sub-message-section"
+import { HeroSection } from "@/Sections/hero/ui/hero-section"
+import { PreFooterSection } from "@/Sections/pre-footer/ui/pre-footer-section"
+import { ProductFeaturesSection } from "@/Sections/product-showcase/ui/product-features-section"
+import { SubMessageSection } from "@/Sections/sub-message/ui/sub-message-section"
 import { Footer } from "@/widgets/footer/ui/footer"
 import { Navbar } from "@/widgets/navigation/ui/navbar"
 

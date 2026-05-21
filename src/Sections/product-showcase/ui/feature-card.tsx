@@ -1,7 +1,8 @@
 import { motion, useMotionValue } from "framer-motion"
-import { useEffect, useRef, useState, type JSX, type ReactNode } from "react"
+import { useEffect, useRef, type JSX, type ReactNode } from "react"
 
 import { useScrollReveal } from "@/Sections/product-showcase/hooks/use-scroll-reveal"
+import { useIsMobile } from "@/shared/hooks/use-is-mobile"
 import type { FeatureItem } from "@/Sections/product-showcase/model/feature-data"
 import {
   FeatureCta,
@@ -45,7 +46,7 @@ function TerminalHero({ item }: { item: FeatureItem }) {
             <FeatureProduct item={item} />
             <div className="flex flex-col gap-4">
               <FeatureTagline item={item} />
-              <p data-sr className="text-[20px] font-medium leading-[1.3] tracking-[-0.02em] text-[#D4D4D4]">
+              <p data-sr className="text-[24px] font-medium leading-[1.3] tracking-[-0.02em] text-[#D4D4D4]">
                 {item.description}
               </p>
             </div>
@@ -69,17 +70,6 @@ function TerminalHero({ item }: { item: FeatureItem }) {
       </div>
     </div>
   )
-}
-
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 768)
-    check()
-    window.addEventListener("resize", check)
-    return () => window.removeEventListener("resize", check)
-  }, [])
-  return isMobile
 }
 
 const REBATE_HORIZONTAL_PADDING = 240

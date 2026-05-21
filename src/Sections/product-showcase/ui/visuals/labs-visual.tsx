@@ -85,8 +85,8 @@ const SMALL_DOTS = [
   { x: 429, y: 227, color: LIGHT_LIME },
 ]
 
-const HALO_SIZE = 14
-const HALO_BLUR = 8
+const HALO_SIZE = 28
+const HALO_BLUR = 14
 
 const W = 555
 const H = 353

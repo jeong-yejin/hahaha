@@ -17,4 +17,19 @@ export const FOOTER_SECTIONS: FooterSection[] = [
       { label: "Labs", href: "#" },
     ],
   },
+  {
+    label: "Company",
+    links: [
+      { label: "About", href: "#" },
+      { label: "Careers", href: "#" },
+      { label: "Contact", href: "#" },
+    ],
+  },
+  {
+    label: "Legal",
+    links: [
+      { label: "Privacy", href: "#" },
+      { label: "Terms", href: "#" },
+    ],
+  },
 ]

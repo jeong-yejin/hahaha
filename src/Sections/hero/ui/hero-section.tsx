@@ -1,5 +1,5 @@
 import { useRef } from "react"
-import { ChevronDown } from "lucide-react"
+import { ArrowRight, ChevronDown } from "lucide-react"
 import { useHeroIntroAnimation } from "@/Sections/hero/hooks/use-hero-intro-animation"
 import { useMagnetic } from "@/shared/hooks/use-magnetic"
 
@@ -29,7 +29,8 @@ export function HeroSection() {
 
       <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 px-6 md:px-8">
         <h1 ref={h1Ref} className="hero-title">
-          Trade, Defined
+          Trade,{" "}
+          <span className="hero-title-anchor">Defined</span>
         </h1>
 
         <p ref={subtitleRef} className="hero-subtitle">
@@ -40,6 +41,7 @@ export function HeroSection() {
         <div ref={ctaWrapRef} className="hero-cta-wrap">
           <a ref={ctaRef} href="#features" className="group hero-cta-primary">
             See the platform
+            <ArrowRight className="hero-cta-arrow h-4 w-4" />
           </a>
         </div>
       </div>

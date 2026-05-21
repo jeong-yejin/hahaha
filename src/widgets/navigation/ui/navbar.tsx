@@ -32,7 +32,7 @@ export function Navbar() {
             <a
               key={item.label}
               href={item.href}
-              className="rounded-full px-4 py-1.5 text-[13px] font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all duration-300"
+              className="rounded-full px-4 py-1.5 text-[13px] font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CAFF5D] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             >
               {item.label}
             </a>

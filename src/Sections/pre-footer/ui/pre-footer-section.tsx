@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react"
 import { gsap } from "gsap"
 import { useReducedMotion } from "@/shared/hooks/use-reduced-motion"
 import { GlowButton } from "@/shared/ui/glow-button"
-import { ShinyButton } from "@/shared/ui/shiny-button"
 import { Starfield } from "@/shared/ui/starfield"
 
 export function PreFooterSection() {
@@ -72,10 +71,16 @@ export function PreFooterSection() {
 
         <div data-pf style={{ opacity: reduced ? 1 : 0 }} className="pre-footer-cta">
           <GlowButton label="Start trading" className="h-10" />
-          <ShinyButton className="h-10" style={{ "--primary": "80 100% 68%" }}>
-            Partner with us
-          </ShinyButton>
         </div>
+
+        <a
+          data-pf
+          href="#"
+          style={{ opacity: reduced ? 1 : 0 }}
+          className="pre-footer-secondary-link"
+        >
+          Building something? Partner with us →
+        </a>
       </div>
 
     </section>

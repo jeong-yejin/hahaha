@@ -6,6 +6,7 @@ export interface FeatureItem {
   cta: string
   href: string
   bg: string
+  primary?: boolean
 }
 
 export const FEATURES: FeatureItem[] = [
@@ -17,6 +18,7 @@ export const FEATURES: FeatureItem[] = [
     cta: "Launch Terminal",
     href: "#",
     bg: "#0a0a0a",
+    primary: true,
   },
   {
     id: "feature-rebate",

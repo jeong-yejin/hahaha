@@ -1,36 +1,4 @@
-import { useEffect, useRef, useState } from "react"
-
-const generateUUID = () => {
-  const lut = Array(256)
-    .fill(null)
-    .map((_, i) => (i < 16 ? "0" : "") + i.toString(16))
-  const d0 = (Math.random() * 0xffffffff) | 0
-  const d1 = (Math.random() * 0xffffffff) | 0
-  const d2 = (Math.random() * 0xffffffff) | 0
-  const d3 = (Math.random() * 0xffffffff) | 0
-  return (
-    lut[d0 & 0xff] +
-    lut[(d0 >> 8) & 0xff] +
-    lut[(d0 >> 16) & 0xff] +
-    lut[(d0 >> 24) & 0xff] +
-    "-" +
-    lut[d1 & 0xff] +
-    lut[(d1 >> 8) & 0xff] +
-    "-" +
-    lut[((d1 >> 16) & 0x0f) | 0x40] +
-    lut[(d1 >> 24) & 0xff] +
-    "-" +
-    lut[(d2 & 0x3f) | 0x80] +
-    lut[(d2 >> 8) & 0xff] +
-    "-" +
-    lut[(d2 >> 16) & 0xff] +
-    lut[(d2 >> 24) & 0xff] +
-    lut[d3 & 0xff] +
-    lut[(d3 >> 8) & 0xff] +
-    lut[(d3 >> 16) & 0xff] +
-    lut[(d3 >> 24) & 0xff]
-  )
-}
+import { useEffect, useRef } from "react"
 
 interface StarfieldProps {
   starColor?: string
@@ -46,32 +14,27 @@ interface StarfieldProps {
   quantity?: number
 }
 
-interface StarfieldState {
-  init: boolean
-  canvas: boolean
-  start: boolean
-  stop: boolean
-  destroy: boolean
-  reset: boolean
-  uid: string
-  running: boolean
-  hyperspace?: boolean
-}
-
-type Star = [number, number, number, number, number, number, number, boolean]
-
-interface StarfieldData {
-  w: number
-  h: number
-  ctx: CanvasRenderingContext2D | null
-  cw: number
-  ch: number
+type Star = {
   x: number
   y: number
   z: number
-  star: { colorRatio: number; arr: Star[] }
-  prevTime: number
+  prevX: number
+  prevY: number
+  nextX: number
+  nextY: number
+  visible: boolean
 }
+
+const createStar = (width: number, height: number, depth: number): Star => ({
+  x: Math.random() * width * 2 - width,
+  y: Math.random() * height * 2 - height,
+  z: Math.max(1, Math.random() * depth),
+  prevX: 0,
+  prevY: 0,
+  nextX: 0,
+  nextY: 0,
+  visible: true,
+})
 
 export function Starfield({
   starColor = "rgba(255,255,255,1)",
@@ -87,331 +50,184 @@ export function Starfield({
   quantity = 512,
 }: StarfieldProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [state, setState] = useState<StarfieldState>({
-    init: true,
-    canvas: true,
-    start: true,
-    stop: false,
-    destroy: false,
-    reset: false,
-    uid: generateUUID(),
-    running: false,
-  })
-  const mouse = useRef({ x: 0, y: 0 })
-  const cursor = useRef({ x: 0, y: 0 })
-  const animationFrameRef = useRef<number | null>(null)
 
-  const sd = useRef<StarfieldData>({
-    w: 0,
-    h: 0,
-    ctx: null,
-    cw: 0,
-    ch: 0,
-    x: 0,
-    y: 0,
-    z: 0,
-    star: { colorRatio: 0, arr: [] },
-    prevTime: 0,
-  })
-
-  const colors = {
-    fill: hyperspace ? `rgba(0,0,0,${opacity})` : bgColor,
-  }
-
-  const compSpeed = hyperspace ? speed * warpFactor : speed
-  const ratio = quantity / 2
-
-  const measureViewport = () => {
-    const el = canvasRef.current?.parentElement
-    if (el) {
-      sd.current.w = el.clientWidth
-      sd.current.h = el.clientHeight
-      sd.current.x = Math.round(sd.current.w / 2)
-      sd.current.y = Math.round(sd.current.h / 2)
-      sd.current.z = (sd.current.w + sd.current.h) / 2
-      sd.current.star.colorRatio = 1 / sd.current.z
-
-      if (cursor.current.x === 0 || cursor.current.y === 0) {
-        cursor.current.x = sd.current.x
-        cursor.current.y = sd.current.y
-      }
-      if (mouse.current.x === 0 || mouse.current.y === 0) {
-        mouse.current.x = cursor.current.x - sd.current.x
-        mouse.current.y = cursor.current.y - sd.current.y
-      }
-    }
-  }
-
-  const setupCanvas = () => {
-    measureViewport()
+  useEffect(() => {
     const canvas = canvasRef.current
-    if (canvas) {
-      sd.current.ctx = canvas.getContext("2d")
-      canvas.width = sd.current.w
-      canvas.height = sd.current.h
-      if (sd.current.ctx) {
-        sd.current.ctx.fillStyle = colors.fill
-        sd.current.ctx.strokeStyle = starColor
-      }
-    }
-  }
+    const parent = canvas?.parentElement
+    if (!canvas || !parent) return
 
-  const bigBang = () => {
-    if (sd.current.star.arr.length !== quantity) {
-      sd.current.star.arr = new Array(quantity).fill(null).map(
-        () =>
-          [
-            Math.random() * sd.current.w * 2 - sd.current.x * 2,
-            Math.random() * sd.current.h * 2 - sd.current.y * 2,
-            Math.round(Math.random() * sd.current.z),
-            0,
-            0,
-            0,
-            0,
-            true,
-          ] as Star,
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    const pointer = { x: 0, y: 0 }
+    const target = { x: 0, y: 0 }
+    const dimensions = { width: 0, height: 0, centerX: 0, centerY: 0, depth: 0 }
+    const runtime = { rafId: 0, warp: hyperspace }
+    let stars: Star[] = []
+
+    const fillColor = () =>
+      runtime.warp ? `rgba(0,0,0,${opacity})` : bgColor
+
+    const measure = () => {
+      const width = parent.clientWidth
+      const height = parent.clientHeight
+      const changed = width !== dimensions.width || height !== dimensions.height
+
+      if (!changed) return
+
+      dimensions.width = width
+      dimensions.height = height
+      dimensions.centerX = Math.round(width / 2)
+      dimensions.centerY = Math.round(height / 2)
+      dimensions.depth = Math.max(1, (width + height) / 2)
+
+      canvas.width = width
+      canvas.height = height
+
+      if (target.x === 0 || target.y === 0) {
+        target.x = dimensions.centerX
+        target.y = dimensions.centerY
+      }
+
+      stars = Array.from({ length: quantity }, () =>
+        createStar(width, height, dimensions.depth),
       )
     }
-  }
 
-  const resize = () => {
-    const oldStar = { ...sd.current.star }
-    measureViewport()
-    sd.current.cw = sd.current.ctx?.canvas.width ?? 0
-    sd.current.ch = sd.current.ctx?.canvas.height ?? 0
+    const updateStars = () => {
+      const adjustedEasing = Math.max(1, easing)
+      pointer.x = (target.x - dimensions.centerX) / adjustedEasing
+      pointer.y = (target.y - dimensions.centerY) / adjustedEasing
 
-    if (sd.current.cw !== sd.current.w || sd.current.ch !== sd.current.h) {
-      sd.current.x = Math.round(sd.current.w / 2)
-      sd.current.y = Math.round(sd.current.h / 2)
-      sd.current.z = (sd.current.w + sd.current.h) / 2
-      sd.current.star.colorRatio = 1 / sd.current.z
+      const ratio = quantity / 2
+      const computedSpeed = runtime.warp ? speed * warpFactor : speed
 
-      const rw = sd.current.w / sd.current.cw
-      const rh = sd.current.h / sd.current.ch
+      for (const star of stars) {
+        star.visible = true
+        star.prevX = star.nextX
+        star.prevY = star.nextY
+        star.x += pointer.x >> 4
+        star.y += pointer.y >> 4
+        star.z -= computedSpeed
 
-      if (sd.current.ctx) {
-        sd.current.ctx.canvas.width = sd.current.w
-        sd.current.ctx.canvas.height = sd.current.h
-      }
+        if (star.x > dimensions.centerX << 1) {
+          star.x -= dimensions.width << 1
+          star.visible = false
+        }
+        if (star.x < -dimensions.centerX << 1) {
+          star.x += dimensions.width << 1
+          star.visible = false
+        }
+        if (star.y > dimensions.centerY << 1) {
+          star.y -= dimensions.height << 1
+          star.visible = false
+        }
+        if (star.y < -dimensions.centerY << 1) {
+          star.y += dimensions.height << 1
+          star.visible = false
+        }
+        if (star.z > dimensions.depth) {
+          star.z -= dimensions.depth
+          star.visible = false
+        }
+        if (star.z < 1) {
+          star.z += dimensions.depth
+          star.visible = false
+        }
 
-      if (!sd.current.star.arr.length) {
-        bigBang()
-      } else {
-        sd.current.star.arr = sd.current.star.arr.map((star, i) => {
-          const newStar = [...star] as Star
-          newStar[0] = oldStar.arr[i][0] * rw
-          newStar[1] = oldStar.arr[i][1] * rh
-          newStar[3] = sd.current.x + (newStar[0] / newStar[2]) * ratio
-          newStar[4] = sd.current.y + (newStar[1] / newStar[2]) * ratio
-          return newStar
-        })
-      }
-
-      if (sd.current.ctx) {
-        sd.current.ctx.fillStyle = colors.fill
-        sd.current.ctx.strokeStyle = starColor
+        star.nextX = dimensions.centerX + (star.x / star.z) * ratio
+        star.nextY = dimensions.centerY + (star.y / star.z) * ratio
       }
     }
-  }
 
-  const update = () => {
-    mouse.current.x = (cursor.current.x - sd.current.x) / easing
-    mouse.current.y = (cursor.current.y - sd.current.y) / easing
+    const draw = () => {
+      ctx.fillStyle = fillColor()
+      ctx.fillRect(0, 0, dimensions.width, dimensions.height)
+      ctx.strokeStyle = starColor
 
-    if (sd.current.star.arr.length > 0) {
-      sd.current.star.arr = sd.current.star.arr.map((star) => {
-        const newStar = [...star] as Star
-        newStar[7] = true
-        newStar[5] = newStar[3]
-        newStar[6] = newStar[4]
-        newStar[0] += mouse.current.x >> 4
-
-        if (newStar[0] > sd.current.x << 1) {
-          newStar[0] -= sd.current.w << 1
-          newStar[7] = false
-        }
-        if (newStar[0] < -sd.current.x << 1) {
-          newStar[0] += sd.current.w << 1
-          newStar[7] = false
+      const colorRatio = 1 / dimensions.depth
+      for (const star of stars) {
+        if (
+          star.prevX <= 0 ||
+          star.prevX >= dimensions.width ||
+          star.prevY <= 0 ||
+          star.prevY >= dimensions.height ||
+          !star.visible
+        ) {
+          continue
         }
 
-        newStar[1] += mouse.current.y >> 4
-        if (newStar[1] > sd.current.y << 1) {
-          newStar[1] -= sd.current.h << 1
-          newStar[7] = false
-        }
-        if (newStar[1] < -sd.current.y << 1) {
-          newStar[1] += sd.current.h << 1
-          newStar[7] = false
-        }
-
-        newStar[2] -= compSpeed
-        if (newStar[2] > sd.current.z) {
-          newStar[2] -= sd.current.z
-          newStar[7] = false
-        }
-        if (newStar[2] < 0) {
-          newStar[2] += sd.current.z
-          newStar[7] = false
-        }
-
-        newStar[3] = sd.current.x + (newStar[0] / newStar[2]) * ratio
-        newStar[4] = sd.current.y + (newStar[1] / newStar[2]) * ratio
-        return newStar
-      })
-    }
-  }
-
-  const draw = () => {
-    const ctx = sd.current.ctx
-    if (!ctx) return
-    ctx.fillStyle = colors.fill
-    ctx.fillRect(0, 0, sd.current.w, sd.current.h)
-    ctx.strokeStyle = starColor
-
-    sd.current.star.arr.forEach((star) => {
-      if (
-        star[5] > 0 &&
-        star[5] < sd.current.w &&
-        star[6] > 0 &&
-        star[6] < sd.current.h &&
-        star[7]
-      ) {
-        ctx.lineWidth = (1 - sd.current.star.colorRatio * star[2]) * 2
+        ctx.lineWidth = (1 - colorRatio * star.z) * 2
         ctx.beginPath()
-        ctx.moveTo(star[5], star[6])
-        ctx.lineTo(star[3], star[4])
+        ctx.moveTo(star.prevX, star.prevY)
+        ctx.lineTo(star.nextX, star.nextY)
         ctx.stroke()
-        ctx.closePath()
       }
-    })
-  }
-
-  const animate = () => {
-    if (sd.current.prevTime === 0) {
-      sd.current.prevTime = Date.now()
     }
-    resize()
-    update()
-    draw()
-    animationFrameRef.current = requestAnimationFrame(animate)
-  }
 
-  const init = () => {
-    measureViewport()
-    setupCanvas()
-    bigBang()
-    animate()
-    setState((prev) => ({ ...prev, running: true }))
-  }
+    const animate = () => {
+      measure()
+      updateStars()
+      draw()
+      runtime.rafId = requestAnimationFrame(animate)
+    }
 
-  const stop = () => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current)
-      setState((prev) => ({ ...prev, running: false }))
+    const handleMouseMove = (event: MouseEvent) => {
+      const rect = parent.getBoundingClientRect()
+      target.x = event.clientX - rect.left
+      target.y = event.clientY - rect.top
     }
-  }
 
-  const reset = () => {
-    stop()
-    sd.current.star.arr = []
-    init()
-  }
+    const handleTilt = (event: DeviceOrientationEvent) => {
+      if (event.beta === null || event.gamma === null) return
+      target.x = dimensions.centerX + event.gamma * 5
+      target.y = dimensions.centerY + event.beta * 5
+    }
 
-  const destroy = () => {
-    stop()
-    sd.current = {
-      w: 0,
-      h: 0,
-      ctx: null,
-      cw: 0,
-      ch: 0,
-      x: 0,
-      y: 0,
-      z: 0,
-      star: { colorRatio: 0, arr: [] },
-      prevTime: 0,
+    const enableWarp = () => {
+      runtime.warp = true
     }
-  }
 
-  const mouseHandler = (event: MouseEvent) => {
-    const el = canvasRef.current?.parentElement
-    if (el) {
-      cursor.current.x =
-        event.pageX || event.clientX + el.scrollLeft - el.clientLeft
-      cursor.current.y =
-        event.pageY || event.clientY + el.scrollTop - el.clientTop
+    const disableWarp = () => {
+      runtime.warp = hyperspace
     }
-  }
 
-  const tiltHandler = (event: DeviceOrientationEvent) => {
-    if (event.beta !== null && event.gamma !== null) {
-      const x = event.gamma
-      const y = event.beta
-      cursor.current.x = sd.current.w / 2 + x * 5
-      cursor.current.y = sd.current.h / 2 + y * 5
-    }
-  }
+    measure()
+    runtime.rafId = requestAnimationFrame(animate)
 
-  const clickHandler = (event: MouseEvent) => {
-    if (event.type === "mousedown") {
-      setState((prev) => ({ ...prev, hyperspace: true }))
-    }
-    if (event.type === "mouseup") {
-      setState((prev) => ({ ...prev, hyperspace: false }))
-    }
-  }
-
-  useEffect(() => {
-    const el = canvasRef.current?.parentElement
-    if (mouseAdjust) {
-      el?.addEventListener("mousemove", mouseHandler)
-    }
-    if (tiltAdjust) {
-      window.addEventListener("deviceorientation", tiltHandler)
-    }
+    if (mouseAdjust) parent.addEventListener("mousemove", handleMouseMove)
+    if (tiltAdjust) window.addEventListener("deviceorientation", handleTilt)
     if (clickToWarp) {
-      el?.addEventListener("mousedown", clickHandler)
-      el?.addEventListener("mouseup", clickHandler)
+      parent.addEventListener("mousedown", enableWarp)
+      parent.addEventListener("mouseup", disableWarp)
+      parent.addEventListener("mouseleave", disableWarp)
     }
-
-    init()
 
     return () => {
-      destroy()
-      if (mouseAdjust) {
-        el?.removeEventListener("mousemove", mouseHandler)
-      }
-      if (tiltAdjust) {
-        window.removeEventListener("deviceorientation", tiltHandler)
-      }
-      if (clickToWarp) {
-        el?.removeEventListener("mousedown", clickHandler)
-        el?.removeEventListener("mouseup", clickHandler)
-      }
+      cancelAnimationFrame(runtime.rafId)
+      parent.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("deviceorientation", handleTilt)
+      parent.removeEventListener("mousedown", enableWarp)
+      parent.removeEventListener("mouseup", disableWarp)
+      parent.removeEventListener("mouseleave", disableWarp)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mouseAdjust, tiltAdjust, clickToWarp])
-
-  useEffect(() => {
-    if (state.reset) {
-      reset()
-      setState((prev) => ({ ...prev, reset: false }))
-    }
-    if (state.stop) {
-      stop()
-      setState((prev) => ({ ...prev, stop: false }))
-    }
-    if (state.start) {
-      init()
-      setState((prev) => ({ ...prev, start: false }))
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.reset, state.stop, state.start])
+  }, [
+    bgColor,
+    clickToWarp,
+    easing,
+    hyperspace,
+    mouseAdjust,
+    opacity,
+    quantity,
+    speed,
+    starColor,
+    tiltAdjust,
+    warpFactor,
+  ])
 
   return (
-    <div style={{ position: "absolute", width: "100%", height: "100%" }}>
-      <canvas ref={canvasRef} />
+    <div className="absolute inset-0">
+      <canvas ref={canvasRef} className="h-full w-full" />
     </div>
   )
 }

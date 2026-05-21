@@ -55,9 +55,10 @@ export function HoverButton({ className, children, href, onClick }: HoverButtonP
     onPointerLeave: handlePointerLeave,
     className: cn(
       "relative isolate overflow-hidden cursor-pointer",
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CAFF5D] focus-visible:ring-offset-2 focus-visible:ring-offset-black",
       "before:content-[''] before:absolute before:inset-0 before:rounded-[inherit] before:pointer-events-none before:z-[1]",
       "before:bg-[linear-gradient(to_bottom,rgba(255,255,255,0.12)_0%,transparent_50%)]",
-      "before:shadow-[inset_0_0_0_1px_rgba(202,255,93,0.22),inset_0_0_18px_0_rgba(202,255,93,0.07),inset_0_-4px_12px_0_rgba(0,0,0,0.45),0_1px_3px_0_rgba(0,0,0,0.6),0_4px_20px_0_rgba(202,255,93,0.18)]",
+      "before:shadow-[inset_0_0_0_1px_rgba(202,255,93,1),inset_0_0_18px_0_rgba(202,255,93,0.07),inset_0_-4px_12px_0_rgba(0,0,0,0.45),0_1px_3px_0_rgba(0,0,0,0.6),0_4px_20px_0_rgba(202,255,93,0.18)]",
       "before:transition-transform before:duration-300 active:before:scale-[0.975]",
       className
     ),

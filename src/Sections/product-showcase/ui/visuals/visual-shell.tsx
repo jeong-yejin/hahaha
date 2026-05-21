@@ -211,7 +211,7 @@ export function AppChrome({ right }: AppChromeProps) {
 
 export function Pill({ children, active }: PillProps) {
   return (
-    <span className={`rounded-full px-2.5 py-0.5 font-mono text-[10px] ${active ? "bg-[#CAFF5D]/15 text-[#CAFF5D]" : "text-white/25"}`}>
+    <span className={`rounded-full px-2.5 py-0.5 font-mono text-[10px] ${active ? "bg-[#CAFF5D]/15 text-[#CAFF5D]" : "text-white/45"}`}>
       {children}
     </span>
   )

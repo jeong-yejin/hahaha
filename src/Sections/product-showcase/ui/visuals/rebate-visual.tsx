@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 
 import { Ipad } from "@/registry/eldoraui/ipad"
 import { useReducedMotion } from "@/shared/hooks/use-reduced-motion"
@@ -11,6 +12,15 @@ const MAX_TRADES = 50
 const PER_TRADE_USDT = 19.2
 
 const ANIM_RAMP = 2500
+
+const CARD_WIDTH = 560
+const CARD_HEIGHT = 96
+const TOP_OFFSET = 24
+const STACK_OFFSET_Y = 18
+const STACK_SCALE_DELTA = 0.05
+const STACK_OPACITY_DELTA = 0.28
+const MAX_VISIBLE = 4
+const INTERVAL_MS = 1600
 
 function easeInOutCubic(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
@@ -98,8 +108,223 @@ export function RebateVisual() {
           >
             <RebateCalculator trades={trades} />
           </div>
+          <div
+            className="pointer-events-none absolute left-1/2 top-0 z-10"
+            style={{
+              width: DESIGN_WIDTH,
+              transform: `translateX(-50%) scale(${scale})`,
+              transformOrigin: "top center",
+            }}
+          >
+            <NotificationStack />
+          </div>
         </div>
       </Ipad>
+    </div>
+  )
+}
+
+interface Notif {
+  name: string
+  amount: string
+  time: string
+  exchange: string
+  exchangeIcon: string
+  exchangeBg: string
+}
+
+const NOTIFICATIONS: Notif[] = [
+  {
+    name: "Rebate paid",
+    amount: "+192.00 USDT",
+    time: "Just now",
+    exchange: "Binance",
+    exchangeIcon: "binance.svg",
+    exchangeBg: "#f0b90b",
+  },
+  {
+    name: "Daily payout sent",
+    amount: "+576.00 USDT",
+    time: "1m ago",
+    exchange: "Bybit",
+    exchangeIcon: "",
+    exchangeBg: "#15192a",
+  },
+  {
+    name: "Trade fee refunded",
+    amount: "+19.20 USDT",
+    time: "3m ago",
+    exchange: "Binance",
+    exchangeIcon: "binance.svg",
+    exchangeBg: "#f0b90b",
+  },
+  {
+    name: "Rebate paid",
+    amount: "+384.00 USDT",
+    time: "5m ago",
+    exchange: "OKX",
+    exchangeIcon: "okx.svg",
+    exchangeBg: "#0a0a0a",
+  },
+  {
+    name: "Bonus credited",
+    amount: "+50.00 USDT",
+    time: "8m ago",
+    exchange: "Bitget",
+    exchangeIcon: "bitget.svg",
+    exchangeBg: "#0a0a0a",
+  },
+  {
+    name: "Daily payout sent",
+    amount: "+960.00 USDT",
+    time: "12m ago",
+    exchange: "Hyperliquid",
+    exchangeIcon: "hyperliquid.png",
+    exchangeBg: "#0a0a0a",
+  },
+]
+
+function NotificationStack() {
+  const reducedMotion = useReducedMotion()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [items, setItems] = useState<Array<{ key: number; data: Notif }>>([])
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    let nextKey = 0
+    let dataIdx = 0
+    let interval: ReturnType<typeof setInterval> | null = null
+    let started = false
+
+    const addOne = () => {
+      setItems((prev) => {
+        const next = {
+          key: nextKey++,
+          data: NOTIFICATIONS[dataIdx % NOTIFICATIONS.length],
+        }
+        dataIdx++
+        return [next, ...prev].slice(0, MAX_VISIBLE)
+      })
+    }
+
+    const start = () => {
+      if (started) return
+      started = true
+
+      if (reducedMotion) {
+        for (let i = 0; i < MAX_VISIBLE; i++) addOne()
+        return
+      }
+
+      addOne()
+      interval = setInterval(addOne, INTERVAL_MS)
+    }
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          start()
+          io.disconnect()
+        }
+      },
+      { threshold: 0.1 },
+    )
+
+    io.observe(el)
+
+    return () => {
+      io.disconnect()
+      if (interval) clearInterval(interval)
+    }
+  }, [reducedMotion])
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative mx-auto"
+      style={{
+        width: CARD_WIDTH,
+        height: TOP_OFFSET + CARD_HEIGHT + STACK_OFFSET_Y * (MAX_VISIBLE - 1) + 40,
+      }}
+    >
+      <AnimatePresence>
+        {items.map((item, idx) => (
+          <motion.div
+            key={item.key}
+            initial={{ y: TOP_OFFSET - 80, opacity: 0, scale: 1 }}
+            animate={{
+              y: TOP_OFFSET + idx * STACK_OFFSET_Y,
+              opacity: Math.max(0, 1 - idx * STACK_OPACITY_DELTA),
+              scale: 1 - idx * STACK_SCALE_DELTA,
+            }}
+            exit={{
+              y: TOP_OFFSET + MAX_VISIBLE * STACK_OFFSET_Y + 20,
+              opacity: 0,
+              scale: 1 - MAX_VISIBLE * STACK_SCALE_DELTA,
+            }}
+            transition={{ type: "spring", stiffness: 280, damping: 30 }}
+            style={{ zIndex: MAX_VISIBLE - idx }}
+            className="absolute inset-x-0 top-0"
+          >
+            <NotificationCard data={item.data} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+function NotificationCard({ data }: { data: Notif }) {
+  return (
+    <div
+      className="flex w-full items-center gap-4 rounded-2xl border border-white/[0.08] bg-[#0f1114]/90 px-5 py-4 backdrop-blur-md"
+      style={{
+        height: CARD_HEIGHT,
+        boxShadow:
+          "0 -20px 60px -20px rgba(255,255,255,0.06) inset, 0 12px 32px rgba(0,0,0,0.5)",
+      }}
+    >
+      <ExchangeBadge data={data} />
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[18px] font-bold leading-[1.4] text-white">
+            {data.name}
+          </span>
+          <span className="text-[13px] leading-[1.5] text-white/40">·</span>
+          <span className="text-[13px] leading-[1.5] text-white/40">
+            {data.time}
+          </span>
+        </div>
+        <p className="text-[14px] leading-[1.5] text-white/60">
+          {data.exchange}
+        </p>
+      </div>
+      <p className="text-[20px] font-bold leading-[1.4] tracking-[-0.005em] text-[#caff5d] tabular-nums">
+        {data.amount}
+      </p>
+    </div>
+  )
+}
+
+function ExchangeBadge({ data }: { data: Notif }) {
+  return (
+    <div
+      className="flex size-12 shrink-0 items-center justify-center rounded-2xl p-1.5"
+      style={{ backgroundColor: data.exchangeBg }}
+    >
+      {data.exchangeIcon ? (
+        <img
+          src={`${ASSET_BASE}/${data.exchangeIcon}`}
+          alt={data.exchange}
+          className="block size-full"
+        />
+      ) : (
+        <span className="text-[10px] font-bold tracking-[-0.02em] text-white">
+          BY<span className="text-[#F6A500]">·</span>BIT
+        </span>
+      )}
     </div>
   )
 }
